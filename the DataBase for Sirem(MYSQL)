@@ -1,0 +1,38 @@
+-- Create the database
+CREATE DATABASE IF NOT EXISTS siren_db;
+USE siren_db;
+
+-- Table to store reported incidents
+CREATE TABLE incidents (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  address VARCHAR(255) NOT NULL,
+  latitude DOUBLE NOT NULL,
+  longitude DOUBLE NOT NULL,
+  injured INT,
+  fire BOOLEAN DEFAULT FALSE,
+  crime BOOLEAN DEFAULT FALSE,
+  severity INT,
+  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table to store emergency service units
+CREATE TABLE services (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  type ENUM('police', 'fire', 'ambulance') NOT NULL,
+  latitude DOUBLE NOT NULL,
+  longitude DOUBLE NOT NULL,
+  available BOOLEAN DEFAULT TRUE
+);
+
+-- Table to store dispatch logs (for tracking which services were dispatched to which incidents)
+CREATE TABLE dispatch_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  incident_id INT,
+  service_id INT,
+  eta_minutes INT,
+  distance_km DOUBLE,
+  dispatched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (incident_id) REFERENCES incidents(id) ON DELETE CASCADE,
+  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+);
