@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Emergency Response Map</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #d32f2f;
+            margin-bottom: 20px;
+        }
+
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        #distance-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .unit-info {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .unit-info h3 {
+            margin-top: 0;
+            color: #1976d2;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        #error-message {
+            color: #d32f2f;
+            text-align: center;
+            padding: 15px;
+            background-color: #ffebee;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            #map {
+                height: 400px;
+            }
+
+            .unit-info {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<h1>Emergency Response Map</h1>
+<div id="error-message"></div>
+<div id="map"></div>
+
+<div id="distance-container">
+    <div class="unit-info">
+        <h3>🚓 Police Response</h3>
+        <div id="police-info">Loading police information...</div>
+    </div>
+    <div class="unit-info">
+        <h3>🚑 Ambulance Response</h3>
+        <div id="ambulance-info">Loading ambulance information...</div>
+    </div>
+    <div class="unit-info">
+        <h3>🚒 Fire Brigade Response</h3>
+        <div id="fire-brigade-info">Loading fire brigade information...</div>
+    </div>
+</div>
+
+<div id="loading">Loading emergency services map...</div>
+
+<script>
+    let units = { police: [], ambulance: [], fireBrigade: [] };
+    let etaUpdateInterval;
+    let map, directionsService;
+    let routeRenderers = [];
+    let accidentMarker;
+    let mapInitialized = false;
+
+    function handleMapError() {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error-message').textContent = 
+            'Error loading Google Maps. Please check your internet connection and try again.';
+        document.getElementById('error-message').style.display = 'block';
+    }
+
+    function initMap() {
+        try {
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 14,
+                center: { lat: 12.9352, lng: 77.6245 },
+                streetViewControl: false,
+                mapTypeControlOptions: {
+                    style: google.maps.MapTypeControlStyle.HORIZONTAL_BAR,
+                    position: google.maps.ControlPosition.TOP_RIGHT
+                }
+            });
+
+            directionsService = new google.maps.DirectionsService();
+            initializeUnits();
+
+            const initialAccidentLocation = { lat: 12.9352, lng: 77.6245 };
+            accidentMarker = new google.maps.Marker({
+                position: initialAccidentLocation,
+                map: map,
+                title: "Accident Location",
+                icon: {
+                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                    scaledSize: new google.maps.Size(40, 40)
+                },
+                draggable: true
+            });
+
+            updateResponseInfo(initialAccidentLocation);
+
+            let dragTimeout;
+            accidentMarker.addListener('dragend', function(event) {
+                clearTimeout(dragTimeout);
+                dragTimeout = setTimeout(() => {
+                    const newLocation = {
+                        lat: event.latLng.lat(),
+                        lng: event.latLng.lng()
+                    };
+                    updateResponseInfo(newLocation);
+                }, 500);
+            });
+
+            startLiveETAUpdates();
+            document.getElementById('loading').style.display = 'none';
+            mapInitialized = true;
+        } catch (error) {
+            console.error("Error initializing map:", error);
+            handleMapError();
+        }
+    }
+
+    function initializeUnits() {
+        units.police = [
+            { position: { lat: 12.9495, lng: 77.6322 }, name: "Police Unit 1", available: true, speed: 30 },
+            { position: { lat: 12.9250, lng: 77.6100 }, name: "Police Unit 2", available: true, speed: 30 },
+            { position: { lat: 12.9550, lng: 77.6400 }, name: "Police Unit 3", available: true, speed: 30 }
+        ];
+
+        units.ambulance = [
+            { position: { lat: 12.9279, lng: 77.6271 }, name: "Ambulance Unit 1", available: true, speed: 40 },
+            { position: { lat: 12.9450, lng: 77.6150 }, name: "Ambulance Unit 2", available: true, speed: 40 },
+            { position: { lat: 12.9150, lng: 77.6350 }, name: "Ambulance Unit 3", available: true, speed: 40 }
+        ];
+
+        units.fireBrigade = [
+            { position: { lat: 12.9300, lng: 77.6200 }, name: "Fire Brigade Unit 1", available: true, speed: 35 },
+            { position: { lat: 12.9500, lng: 77.6300 }, name: "Fire Brigade Unit 2", available: true, speed: 35 },
+            { position: { lat: 12.9200, lng: 77.6100 }, name: "Fire Brigade Unit 3", available: true, speed: 35 }
+        ];
+
+        createUnitMarkers();
+    }
+
+    function createUnitMarkers() {
+        units.police.forEach(unit => {
+            unit.marker = new google.maps.Marker({
+                position: unit.position,
+                map: map,
+                title: unit.name,
+                icon: {
+                    url: "https://cdn-icons-png.flaticon.com/512/296/296216.png",
+                    scaledSize: new google.maps.Size(40, 40)
+                }
+            });
+        });
+
+        units.ambulance.forEach(unit => {
+            unit.marker = new google.maps.Marker({
+                position: unit.position,
+                map: map,
+                title: unit.name,
+                icon: {
+                    url: "https://cdn-icons-png.flaticon.com/512/4329/4329424.png",
+                    scaledSize: new google.maps.Size(40, 40)
+                }
+            });
+        });
+
+        units.fireBrigade.forEach(unit => {
+            unit.marker = new google.maps.Marker({
+                position: unit.position,
+                map: map,
+                title: unit.name,
+                icon: {
+                    url: "https://cdn-icons-png.flaticon.com/512/2979/2979283.png",
+                    scaledSize: new google.maps.Size(40, 40)
+                }
+            });
+        });
+    }
+
+    function updateResponseInfo(accidentLocation) {
+        if (!mapInitialized) return;
+
+        const nearestPolice = findNearestUnit(accidentLocation, units.police);
+        const nearestAmbulance = findNearestUnit(accidentLocation, units.ambulance);
+        const nearestFireBrigade = findNearestUnit(accidentLocation, units.fireBrigade);
+
+        if (nearestPolice) {
+            calculateRoute(accidentLocation, nearestPolice.position, nearestPolice.marker, "Police Unit", nearestPolice.speed);
+            nearestPolice.distance = calculateDistance(accidentLocation, nearestPolice.position);
+            nearestPolice.eta = calculateETA(nearestPolice.distance, nearestPolice.speed);
+        }
+
+        if (nearestAmbulance) {
+            calculateRoute(accidentLocation, nearestAmbulance.position, nearestAmbulance.marker, "Ambulance Unit", nearestAmbulance.speed);
+            nearestAmbulance.distance = calculateDistance(accidentLocation, nearestAmbulance.position);
+            nearestAmbulance.eta = calculateETA(nearestAmbulance.distance, nearestAmbulance.speed);
+        }
+
+        if (nearestFireBrigade) {
+            calculateRoute(accidentLocation, nearestFireBrigade.position, nearestFireBrigade.marker, "Fire Brigade Unit", nearestFireBrigade.speed);
+            nearestFireBrigade.distance = calculateDistance(accidentLocation, nearestFireBrigade.position);
+            nearestFireBrigade.eta = calculateETA(nearestFireBrigade.distance, nearestFireBrigade.speed);
+        }
+
+        updateInfoDisplay(nearestPolice, nearestAmbulance, nearestFireBrigade);
+    }
+
+    function findNearestUnit(location, unitList) {
+        return unitList.reduce((nearest, unit) => {
+            if (!unit.available) return nearest;
+            const dist = calculateDistance(location, unit.position);
+            return (!nearest || dist < nearest.distance) ? { ...unit, distance: dist } : nearest;
+        }, null);
+    }
+
+    function calculateRoute(origin, destination, marker, label, speed) {
+        routeRenderers.forEach(renderer => renderer.setMap(null));
+        routeRenderers = [];
+
+        const request = {
+            origin, destination,
+            travelMode: google.maps.TravelMode.DRIVING
+        };
+
+        directionsService.route(request, (response, status) => {
+            if (status === 'OK') {
+                const directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: map,
+                    directions: response,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: label.includes("Police") ? "blue" : label.includes("Ambulance") ? "green" : "red",
+                        strokeOpacity: 0.7,
+                        strokeWeight: 5
+                    }
+                });
+                routeRenderers.push(directionsRenderer);
+            }
+        });
+    }
+
+    function updateInfoDisplay(policeUnit, ambulanceUnit, fireBrigadeUnit) {
+        document.getElementById("police-info").innerHTML = policeUnit ? `
+            <p><strong>Name:</strong> ${policeUnit.name}</p>
+            <p><strong>Distance:</strong> ${policeUnit.distance.toFixed(2)} km</p>
+            <p><strong>ETA:</strong> ${policeUnit.eta.toFixed(1)} minutes</p>
+            <p><strong>Status:</strong> Available</p>` : "<p>No available police units found</p>";
+
+        document.getElementById("ambulance-info").innerHTML = ambulanceUnit ? `
+            <p><strong>Name:</strong> ${ambulanceUnit.name}</p>
+            <p><strong>Distance:</strong> ${ambulanceUnit.distance.toFixed(2)} km</p>
+            <p><strong>ETA:</strong> ${ambulanceUnit.eta.toFixed(1)} minutes</p>
+            <p><strong>Status:</strong> Available</p>` : "<p>No available ambulances found</p>";
+
+        document.getElementById("fire-brigade-info").innerHTML = fireBrigadeUnit ? `
+            <p><strong>Name:</strong> ${fireBrigadeUnit.name}</p>
+            <p><strong>Distance:</strong> ${fireBrigadeUnit.distance.toFixed(2)} km</p>
+            <p><strong>ETA:</strong> ${fireBrigadeUnit.eta.toFixed(1)} minutes</p>
+            <p><strong>Status:</strong> Available</p>` : "<p>No available fire brigade units found</p>";
+    }
+
+    function startLiveETAUpdates() {
+        if (etaUpdateInterval) clearInterval(etaUpdateInterval);
+        etaUpdateInterval = setInterval(() => {
+            const location = {
+                lat: accidentMarker.getPosition().lat(),
+                lng: accidentMarker.getPosition().lng()
+            };
+            updateResponseInfo(location);
+        }, 15000);
+    }
+
+    function calculateDistance(p1, p2) {
+        const R = 6371;
+        const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+        const dLng = (p2.lng - p1.lng) * Math.PI / 180;
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                  Math.sin(dLng / 2) * Math.sin(dLng / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
+    }
+
+    function calculateETA(distance, speed) {
+        return (distance / speed) * 60;
+    }
+</script>
+
+<!-- Load the Google Maps JavaScript API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPyp3xERabtbIOFcbx1cWTKxtFJ3B-WmI&callback=initMap" async defer
+        onerror="handleMapError()"></script>
+</body>
+</html>

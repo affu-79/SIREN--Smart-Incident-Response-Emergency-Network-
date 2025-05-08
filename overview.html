@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - Incident Overview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+
+    .navbar {
+      background-color: #2196f3;
+      color: white;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .navbar a {
+      color: white;
+      text-decoration: none;
+      margin: 0 15px;
+      font-size: 18px;
+    }
+
+    .navbar a:hover {
+      text-decoration: underline;
+    }
+
+    .container {
+      margin: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    table th,
+    table td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    table th {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    table td {
+      color: #555;
+    }
+
+    table tr:hover {
+      background-color: #f1f1f1;
+    }
+
+    .back-btn {
+      background-color: #2196f3;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+
+    .back-btn:hover {
+      background-color: #1976d2;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="navbar">
+    <a href="index.html">Home</a>
+    <a href="overview.html">Incident Overview</a>
+    <a href="landing.html">Logout</a>
+  </div>
+
+  <div class="container">
+    <button class="back-btn" onclick="window.location.href='index.html'">Back to Dashboard</button>
+
+    <h2>Incident Overview</h2>
+
+    <!-- Table displaying incidents -->
+    <table>
+      <thead>
+        <tr>
+          <th>Incident ID</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Assigned Service</th>
+          <th>Date/Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Sample rows (to be populated dynamically from the database) -->
+        <tr>
+          <td>INC1234</td>
+          <td>Fire</td>
+          <td>RT nagar,KFC</td>
+          <td>In Progress</td>
+          <td>Fire Department</td>
+          <td>2025-04-25 10:30 AM</td>
+        </tr>
+        <tr>
+          <td>INC1235</td>
+          <td>Police</td>
+          <td>Galaria mall,Yelahanka</td>
+          <td>Resolved</td>
+          <td>Police Department</td>
+          <td>2025-04-24 5:30 PM</td>
+        </tr>
+        <tr>
+          <td>INC1235</td>
+          <td>Police</td>
+          <td>Presidency University</td>
+          <td>Resolved</td>
+          <td>Police Department</td>
+          <td>2025-04-24 6:00 PM</td>
+        </tr>
+        <!-- More rows can be added dynamically -->
+      </tbody>
+    </table>
+  </div>
+
+</body>
+
+</html>

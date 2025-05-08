@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - SIREN</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #e8eaf6;
+      font-family: Arial, sans-serif;
+    }
+    .login-container {
+      background: white;
+      padding: 40px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      font-size: 16px;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .error {
+      color: red;
+      margin-bottom: 10px;
+    }
+    .back-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: white;
+      color: #2196F3;
+      font-size: 16px;
+      border: 1px solid #2196F3;
+      cursor: pointer;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .back-btn:hover {
+      background-color: #2196F3;
+      color: white;
+    }
+    .back-btn:before {
+      content: "← ";
+      font-size: 18px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h2>Admin Login</h2>
+    <div id="error-message" class="error"></div>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="validateLogin()">Login</button>
+
+    <button class="back-btn" onclick="window.location.href='landing.html'">Back to Landing</button>
+  </div>
+
+  <script>
+    function validateLogin() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("error-message");
+
+      if (username === "" || password === "") {
+        errorDiv.textContent = "Username and Password cannot be empty.";
+      } else {
+        // Example: Hardcoded login check
+        if (username === "admin" && password === "admin123") {
+          window.location.href = "index.html"; // your main dashboard page
+        } else {
+          errorDiv.textContent = "Invalid Username or Password.";
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>

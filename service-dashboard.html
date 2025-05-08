@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Service Dashboard - SIREN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; }
+    .container { padding: 20px; }
+    table {
+      width: 100%;
+      background: white;
+      border-collapse: collapse;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    th { background: #1976d2; color: white; }
+    tr:hover { background: #f1f1f1; }
+    .status-assigned { font-weight: bold; color: green; }
+    .status-pending { font-weight: bold; color: orange; }
+    
+    /* Creative Navbar Styles */
+    .navbar {
+      background: linear-gradient(90deg, #007bff, #00d4ff);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 10px 0;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      color: #fff !important;
+      font-weight: bold;
+      font-size: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+    .navbar-brand img {
+      margin-right: 10px;
+      transition: transform 0.3s ease;
+    }
+    .navbar-brand:hover {
+      transform: scale(1.05);
+    }
+    .navbar-brand:hover img {
+      transform: rotate(360deg);
+    }
+    .nav-link {
+      color: #fff !important;
+      font-weight: 500;
+      padding: 8px 15px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #f8f9fa !important;
+    }
+    .btn-logout {
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 6px 12px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .btn-logout:hover {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #fff;
+    }
+    .navbar-toggler {
+      border-color: #fff;
+    }
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.95)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+  </style>
+</head>
+<body>
+  <!-- Creative Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <img src="https://encrypted-tbn0.static.com/images?q=tbn:ANd9GcTm8r4ug5-RECHxlyf6qGKk3Gvg37gOZRFGtw&s" alt="SIREN Logo" style="height: 40px;" />
+        <strong>SIREN - Service Dashboard</strong>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="Overview.html">Overview</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn-logout" href="landing.html">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h2>Assigned Incidents (Filtered by Type)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Incident ID</th>
+          <th>Type</th>
+          <th>Location</th>
+          
+          <th>Status</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody ">
+      
+        <tr>
+          <td>INC1234</td>
+          <td>Police</td>
+          <td>RT nagar,KFC</td>
+          <td>In Progress</td>
+
+          <td>2025-04-25 10:30 AM</td>
+        </tr>
+        <tr>
+          <td>INC1235</td>
+          <td>Police</td>
+          <td>Galaria mall,Yelahanka</td>
+          <td>Resolved</td>
+         
+          <td>2025-04-24 5:30 PM</td>
+        </tr>
+        <tr>
+          <td>INC1235</td>
+          <td>Police</td>
+          <td>284/1, 6th Cross Rd, Jakkur Layout, Jakkuru Layout, Jakkuru,<br> Bengaluru, Karnataka 560001, India</td>
+          <td>Resolved</td>
+          <td>2025-04-24 6:00 PM</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- JS Libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Service type (e.g., "Fire", "Police", "Ambulance")
+    const serviceType = "Fire"; // Change as needed
+
+    // Map human-readable service type to database type
+    const typeMap = {
+      "Ambulance": "A",
+      "Fire": "F",
+      "Police": "P"
+    };
+
+    // Fetch incidents by service type
+    function fetchIncidentsByType() {
+      const dbType = typeMap[serviceType];
+      if (!dbType) {
+        console.error("Invalid service type:", serviceType);
+        return;
+      }
+
+      $.ajax({
+        url: `http://localhost:3000/api/incidents-by-type/${dbType}`,
+        type: 'GET',
+        success: function(data) {
+          const tableBody = $('#incidentTableBody');
+          tableBody.empty();
+
+          if (data.length === 0) {
+            tableBody.append('<tr><td colspan="5">No incidents found for this service type.</td></tr>');
+            return;
+          }
+
+          data.forEach(incident => {
+            const row = `
+              <tr>
+                <td>${incident.incident_id}</td>
+                <td>${incident.type}</td>
+                <td>${incident.location}</td>
+                <td>${incident.time}</td>
+                <td class="status-${incident.status.toLowerCase()}">${incident.status}</td>
+              </tr>
+            `;
+            tableBody.append(row);
+          });
+        },
+        error: function(err) {
+          console.error('Error fetching incidents:', err);
+          $('#incidentTableBody').html('<tr><td colspan="5">Error loading incidents.</td></tr>');
+        }
+      });
+    }
+
+    // Initialize on page load
+    $(document).ready(function() {
+      fetchIncidentsByType();
+    });
+  </script>
+</body>
+</html>

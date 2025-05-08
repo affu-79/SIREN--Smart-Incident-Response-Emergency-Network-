@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SIREN - Emergency Dispatch System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f8f9fa; }
+    .map-container { height: 350px; width: 100%; }
+    .incident-table, .service-controls { margin-top: 20px; }
+    .service-btn { margin: 5px; }
+    table th, table td { vertical-align: middle; text-align: center; }
+    
+    /* Creative Navbar Styles */
+    .navbar {
+      background: linear-gradient(90deg, #007bff, #00d4ff);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 10px 0;
+    }
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      color: #fff !important;
+      font-weight: bold;
+      font-size: 1.5rem;
+      transition: transform 0.3s ease;
+    }
+    .navbar-brand img {
+      margin-right: 10px;
+      transition: transform 0.3s ease;
+    }
+    .navbar-brand:hover {
+      transform: scale(1.05);
+    }
+    .navbar-brand:hover img {
+      transform: rotate(360deg);
+    }
+    .nav-link {
+      color: #fff !important;
+      font-weight: 500;
+      padding: 8px 15px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .nav-link:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: #f8f9fa !important;
+    }
+    .btn-logout {
+      color: #fff;
+      border: 1px solid #fff;
+      padding: 6px 12px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+    .btn-logout:hover {
+      background-color: #dc3545;
+      border-color: #dc3545;
+      color: #fff;
+    }
+    .navbar-toggler {
+      border-color: #fff;
+    }
+    .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.95)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+  </style>
+</head>
+<body>
+  <!-- Creative Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTm8r4ug5-RECHxlyf6qGKk3Gvg37gOZRFGtw&s" alt="SIREN Logo" style="height: 40px;" />
+        <strong>SIREN</strong>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="overview.html">Overview</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn-logout" href="landing.html">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <!-- Incident Input Section -->
+      <div class="col-md-6">
+        <div class="card p-4 mb-4">
+          <h3>Report Incident</h3>
+          <form id="incidentInputForm">
+            <div class="mb-3">
+              <label for="location" class="form-label">Address</label>
+              <input type="text" class="form-control" id="location" required>
+            </div>
+            <div class="mb-3">
+              <label for="peopleInjured" class="form-label">Number of Injured</label>
+              <input type="number" class="form-control" id="peopleInjured" required>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="fire">
+              <label class="form-check-label" for="fire">Is there Fire?</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="crime">
+              <label class="form-check-label" for="crime">Is there Crime?</label>
+            </div>
+            <div class="mb-3">
+              <label for="severity" class="form-label">Severity (1–10)</label>
+              <input type="range" class="form-range" id="severity" min="1" max="10" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Submit Incident</button>
+          </form>
+
+          <div class="incident-table mt-4">
+            <h5>Reported Incidents</h5>
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Address</th>
+                  <th>Coordinates</th>
+                  <th>Injured</th>
+                  <th>Fire</th>
+                  <th>Crime</th>
+                  <th>Severity</th>
+                </tr>
+              </thead>
+              <tbody id="incidentData"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- Map and Dispatch Section -->
+      <div class="col-md-6">
+        <div class="card p-4 mb-4">
+          <h3>Incident Map</h3>
+          <div id="map" class="map-container mb-3"></div>
+
+          <div class="service-controls">
+            <div class="mb-2">
+              <label><input type="checkbox" id="ambulanceNeeded" class="form-check-input me-2"> Ambulance</label>
+              <button id="incAmbulance" class="btn btn-sm btn-secondary ms-2">+1</button>
+              <span id="ambulanceCount">0</span>
+            </div>
+            <div class="mb-2">
+              <label><input type="checkbox" id="fireBrigadeNeeded" class="form-check-input me-2"> Fire Brigade</label>
+              <button id="incFireBrigade" class="btn btn-sm btn-secondary ms-2">+1</button>
+              <span id="fireBrigadeCount">0</span>
+            </div>
+            <div class="mb-2">
+              <label><input type="checkbox" id="policeNeeded" class="form-check-input me-2"> Police</label>
+              <button id="incPolice" class="btn btn-sm btn-secondary ms-2">+1</button>
+              <span id="policeCount">0</span>
+            </div>
+
+            <button id="dispatchBtn" class="btn btn-success mt-3">Dispatch Services</button>
+          </div>
+           <center><a href="map.html"style="font-size:16px;text-decoration:none;color:black;"> click here</a></center> 
+          <div id="nearestServices" class="mt-4">
+            <h5>Nearest Services</h5>
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th>Service ID</th>
+                  <th>Coordinates</th>
+                  <th>ETA (min)</th>
+                  <th>Distance (km)</th>
+                </tr>
+              </thead>
+              <tbody id="serviceData"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPyp3xERabtbIOFcbx1cWTKxtFJ3B-WmI&libraries=places"></script>
+  <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+
+  <script>
+    let map, marker, geocoder, directionsService, infoWindows = [];
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 13.0827, lng: 77.5913 },
+        zoom: 13
+      });
+
+      geocoder = new google.maps.Geocoder();
+      directionsService = new google.maps.DirectionsService();
+
+      marker = new google.maps.Marker({
+        position: map.getCenter(),
+        map: map,
+        draggable: true,
+        title: "Incident Location",
+        icon: {
+          url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+          scaledSize: new google.maps.Size(40, 40)
+        }
+      });
+
+      marker.addListener('dragend', () => {
+        const pos = marker.getPosition();
+        geocoder.geocode({ location: pos }, (results, status) => {
+          if (status === "OK" && results[0]) {
+            $('#location').val(results[0].formatted_address);
+          }
+        });
+      });
+
+      // Fetch and place all services with labels
+      $.get('http://localhost:3000/api/services', function(data) {
+        const markers = data.map(service => {
+          const color = service.type === 'A' ? '0000FF' : service.type === 'F' ? 'FF0000' : '008000';
+          const label = service.type === 'A' ? 'Ambulance' : service.type === 'F' ? 'Fire' : 'Police';
+          const m = new google.maps.Marker({
+            position: { lat: service.latitude, lng: service.longitude },
+            map: map,
+            icon: {
+              url: `https://via.placeholder.com/40/${color}/FFFFFF?text=${label.charAt(0)}`,
+              scaledSize: new google.maps.Size(40, 40)
+            },
+            label: {
+              text: label,
+              fontSize: "12px",
+              fontWeight: "bold",
+              color: "black"
+            }
+          });
+          const iw = new google.maps.InfoWindow({
+            content: `<strong>ID:</strong> ${service.id}<br><strong>Type:</strong> ${label}`
+          });
+          m.addListener('click', () => {
+            infoWindows.forEach(i => i.close());
+            iw.open(map, m);
+          });
+          infoWindows.push(iw);
+          return m;
+        });
+
+        new markerClusterer.MarkerClusterer({ map: map, markers });
+      });
+
+      $('#location').on('change', function () {
+        geocoder.geocode({ address: $(this).val() }, (results, status) => {
+          if (status === "OK") {
+            const loc = results[0].geometry.location;
+            marker.setPosition(loc);
+            map.setCenter(loc);
+          }
+        });
+      });
+    }
+
+    // Count up
+    $('#incAmbulance').click(() => updateCount('ambulance'));
+    $('#incFireBrigade').click(() => updateCount('fireBrigade'));
+    $('#incPolice').click(() => updateCount('police'));
+    function updateCount(type) {
+      const count = parseInt($(`#${type}Count`).text()) + 1;
+      $(`#${type}Count`).text(count);
+    }
+
+    // Submit incident
+    $('#incidentInputForm').submit(function (e) {
+      e.preventDefault();
+      const pos = marker.getPosition();
+      const incident = {
+        address: $('#location').val(),
+        latitude: pos.lat(),
+        longitude: pos.lng(),
+        injured: $('#peopleInjured').val(),
+        fire: $('#fire').is(':checked'),
+        crime: $('#crime').is(':checked'),
+        severity: $('#severity').val()
+      };
+
+      $.ajax({
+        url: 'http://localhost:3000/api/incidents',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(incident),
+        success: () => {
+          alert('Incident Reported');
+          fetchIncidents();
+        },
+        error: () => alert('Error reporting incident.')
+      });
+    });
+
+    function fetchIncidents() {
+      $.get('http://localhost:3000/api/incidents', data => {
+        $('#incidentData').empty();
+        data.forEach(i => {
+          $('#incidentData').append(`
+            <tr>
+              <td>${i.address}</td>
+              <td>${i.latitude}, ${i.longitude}</td>
+              <td>${i.injured}</td>
+              <td>${i.fire ? 'Yes' : 'No'}</td>
+              <td>${i.crime ? 'Yes' : 'No'}</td>
+              <td>${i.severity}</td>
+            </tr>`);
+        });
+      });
+    }
+
+    // Dispatch logic
+    $('#dispatchBtn').click(() => {
+      const a = parseInt($('#ambulanceCount').text());
+      const f = parseInt($('#fireBrigadeCount').text());
+      const p = parseInt($('#policeCount').text());
+
+      if (a || f || p) {
+        const pos = marker.getPosition();
+        const payload = {
+          latitude: pos.lat(),
+          longitude: pos.lng(),
+          ambulanceCount: a,
+          fireBrigadeCount: f,
+          policeCount: p
+        };
+
+        $.ajax({
+          url: 'http://localhost:3000/api/nearest-services',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify(payload),
+          success: function (services) {
+            $('#serviceData').empty();
+            const dispatchLogs = [];
+
+            services.forEach(service => {
+              const origin = { lat: service.latitude, lng: service.longitude };
+              const destination = { lat: payload.latitude, lng: payload.longitude };
+
+              directionsService.route({
+                origin,
+                destination,
+                travelMode: google.maps.TravelMode.DRIVING
+              }, (response, status) => {
+                if (status === "OK") {
+                  const leg = response.routes[0].legs[0];
+                  const distance = leg.distance.value / 1000;
+                  const eta = leg.duration.value / 60;
+
+                  $('#serviceData').append(`
+                    <tr>
+                      <td>${service.id}</td>
+                      <td>${service.latitude.toFixed(5)}, ${service.longitude.toFixed(5)}</td>
+                      <td>${eta.toFixed(2)}</td>
+                      <td>${distance.toFixed(2)}</td>
+                    </tr>`);
+
+                  dispatchLogs.push({
+                    serviceId: service.id,
+                    eta: parseFloat(eta.toFixed(2)),
+                    distance: parseFloat(distance.toFixed(2))
+                  });
+
+                  const renderer = new google.maps.DirectionsRenderer({
+                    map: map,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                      strokeColor: service.type === 'A' ? 'blue' : service.type === 'F' ? 'red' : 'green',
+                      strokeWeight: 4
+                    }
+                  });
+                  renderer.setDirections(response);
+
+                  if (dispatchLogs.length === services.length) {
+                    $.get('http://localhost:3000/api/incidents', incidents => {
+                      const latestIncident = incidents[0];
+                      $.ajax({
+                        url: 'http://localhost:3000/api/dispatch-logs',
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                          incidentId: latestIncident.id,
+                          logs: dispatchLogs
+                        }),
+                        success: res => console.log('✅ Dispatch logs saved', res),
+                        error: err => console.error('❌ Error logging dispatch:', err)
+                      });
+                    });
+                  }
+                }
+              });
+            });
+          }
+        });
+      } else {
+        alert("Select at least one service to dispatch.");
+      }
+    });
+
+    window.onload = () => {
+      initMap();
+      fetchIncidents();
+    };
+  </script>
+</body>
+</html>
